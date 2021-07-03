@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for
 from utils import save_img, load_img, bg_remove, convert_into_base64
 ALLOWED_EXTENSIONS = set(['txt', 'png', 'jpg', 'jpeg'])
-upload_folder = "static"
+upload_folder = "images"
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
