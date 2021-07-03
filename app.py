@@ -1,6 +1,8 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for
-
+from utils import save_img, load_img, bg_remove, convert_into_base64
+ALLOWED_EXTENSIONS = set(['txt', 'png', 'jpg', 'jpeg'])
+upload_folder = "static"
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
@@ -15,26 +17,29 @@ def home():
     """Render website's home page."""
     return "Bg removal is live"
 
-###
-# The functions below should be applicable to all Flask apps.
-###
+@app.route("/removebg", methods= ['POST', 'GET'])
+def upload_file():
+    image_file = request.files["image"]
+    if 'image' not in request.files:
+        return({"msg":"Failure", "Reason":"Image not found. Please upload the image."})
+    try: 
+        image_location = os.path.join(upload_folder, image_file.filename)
+        image_file.save(image_location)
 
-# @app.route('/<file_name>.txt')
-# def send_text_file(file_name):
-#     """Send your static text file."""
-#     file_dot_text = file_name + '.txt'
-#     return app.send_static_file(file_dot_text)
+        new_image = load_img(image_location)
+        new_image_name = 'new_'+image_file.filename+'.jpg'
+        new_image_location = save_img(new_image, new_image_name, upload_folder)
 
+        pred = bg_remove(imgpath=new_image_location, img=None)
+        pred_image_name = 'pred_'+image_file.filename
+        pred_location = save_img(pred, pred_image_name, upload_folder)            
 
-# @app.after_request
-# def add_header(response):
-#     """
-#     Add headers to both force latest IE rendering engine or Chrome Frame,
-#     and also to cache the rendered page for 10 minutes.
-#     """
-#     response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
-#     response.headers['Cache-Control'] = 'public, max-age=600'
-#     return response
+        base_64_data = convert_into_base64(pred_location)
+
+        return base_64_data
+    except Exception as error:
+        return({"status" : "failure", "Error" : error})
+
 
 
 @app.errorhandler(404)
